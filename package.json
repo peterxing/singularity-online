@@ -1,0 +1,13 @@
+{
+  "name": "singularity-online",
+  "version": "1.0.0",
+  "description": "A browser MMORPG parody: e/acc vs EA. Everything (world, characters, VFX, UI icons, audio) is generated in code.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "dependencies": {
+    "ws": "^8.21.3"
+  }
+}

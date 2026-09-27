@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Singularity Online — Accelerate or Align</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 4 L56 32 L32 60 L8 32 Z' fill='%236fe3ff' stroke='%23e8c46a' stroke-width='4'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three/build/three.module.js", "three/addons/": "./vendor/three/addons/" } }
+  </script>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="plates"></div>
+  <div id="fct"></div>
+
+  <!-- Loading -->
+  <div id="loading">
+    <div class="logo"><span class="l1">SINGULARITY</span><span class="l2">ONLINE</span><span class="l3">Accelerate &nbsp;or&nbsp; Align</span></div>
+    <div class="loadbar"><div id="loadfill"></div></div>
+    <div id="loadtext">Initializing latent space…</div>
+    <div class="loadtip" id="loadtip"></div>
+  </div>
+
+  <!-- Character select -->
+  <div id="select" class="hidden">
+    <div class="sel-top">
+      <div class="logo small"><span class="l1">SINGULARITY</span><span class="l2">ONLINE</span></div>
+      <div id="realm" class="realm">Connecting…</div>
+    </div>
+    <div class="sel-left panel">
+      <div class="panel-title">Choose your banner</div>
+      <div class="factions">
+        <button class="fac eacc" data-f="eacc"><b>e/acc</b><small>The Accelerationists</small></button>
+        <button class="fac ea" data-f="ea"><b>EA</b><small>The Aligned</small></button>
+      </div>
+      <div id="facMotto" class="motto"></div>
+      <div class="panel-title">Champion</div>
+      <div id="champList" class="champ-list"></div>
+    </div>
+    <div class="sel-right panel">
+      <div id="champName" class="champ-name"></div>
+      <div id="champTitle" class="champ-title"></div>
+      <div id="champRole" class="champ-role"></div>
+      <div id="champBio" class="champ-bio"></div>
+      <div class="panel-title">Abilities</div>
+      <div id="champAbilities" class="champ-abilities"></div>
+    </div>
+    <div class="sel-bottom panel">
+      <input id="heroName" maxlength="16" placeholder="Name your hero" autocomplete="off" spellcheck="false" />
+      <button id="randName" class="btn ghost" title="Random name">🎲</button>
+      <button id="enterBtn" class="btn primary">Enter World</button>
+    </div>
+    <div class="disclaimer" id="disclaimer"></div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div id="playerFrame" class="unitframe">
+      <div class="portrait"><img id="pfPortrait" alt="" /><div class="lvl" id="pfLevel">1</div></div>
+      <div class="uf-body">
+        <div class="uf-name" id="pfName">Hero</div>
+        <div class="bar hp"><div class="fill" id="pfHp"></div><span id="pfHpText"></span></div>
+        <div class="bar en"><div class="fill" id="pfEn"></div><span id="pfEnText"></span></div>
+      </div>
+      <div class="combat-ico" id="pfCombat" title="In combat">⚔</div>
+    </div>
+    <div id="buffs" class="aura-row"></div>
+
+    <div id="targetFrame" class="unitframe target hidden">
+      <div class="uf-body">
+        <div class="uf-name" id="tfName">Target</div>
+        <div class="bar hp"><div class="fill" id="tfHp"></div><span id="tfHpText"></span></div>
+        <div class="bar cast hidden" id="tfCast"><div class="fill" id="tfCastFill"></div><span id="tfCastText"></span></div>
+        <div class="uf-sub" id="tfSub"></div>
+      </div>
+      <div class="portrait"><img id="tfPortrait" alt="" /><div class="lvl" id="tfLevel">1</div><div class="elite hidden" id="tfElite"></div></div>
+    </div>
+    <div id="debuffs" class="aura-row target"></div>
+
+    <div id="bossBar" class="hidden"><div class="boss-name" id="bossName"></div><div class="bar hp big"><div class="fill" id="bossHp"></div><span id="bossHpText"></span></div></div>
+
+    <div id="minimapWrap">
+      <div id="zoneName">—</div>
+      <canvas id="minimap" width="220" height="220"></canvas>
+      <div class="mm-ring"></div>
+      <div id="clock">12:00</div>
+      <div class="mm-btns"><button id="mmIn">+</button><button id="mmOut">−</button><button id="mapBtn" title="World map (M)">M</button></div>
+    </div>
+
+    <div id="questTracker"></div>
+
+    <div id="chat">
+      <div id="chatLog"></div>
+      <input id="chatInput" maxlength="200" placeholder="Press Enter to chat — /s for say, /who, /dance" autocomplete="off" />
+    </div>
+
+    <div id="castBar" class="hidden"><div class="fill" id="castFill"></div><span id="castText"></span><span id="castTime"></span></div>
+    <div id="bottomBar">
+      <div id="xpBar"><div class="fill" id="xpFill"></div><span id="xpText"></span></div>
+      <div id="actionBar"></div>
+      <div class="menu-btns">
+        <button data-act="log" title="Quest log (L)">📜</button>
+        <button data-act="map" title="World map (M)">🗺</button>
+        <button data-act="help" title="Help (H)">?</button>
+        <button data-act="settings" title="Settings (Esc)">⚙</button>
+      </div>
+    </div>
+    <div id="gold"></div>
+    <div id="zoneText"><div class="zt-main"></div><div class="zt-sub"></div></div>
+    <div id="errorText"></div>
+    <div id="bannerText"></div>
+    <div id="fps" class="hidden"></div>
+  </div>
+
+  <div id="dialog" class="panel parchment hidden"></div>
+  <div id="questLog" class="panel hidden"></div>
+  <div id="worldMap" class="panel hidden"><canvas id="worldMapCanvas" width="720" height="720"></canvas><div class="wm-title">Latentia</div></div>
+  <div id="settings" class="panel hidden"></div>
+  <div id="help" class="panel hidden"></div>
+  <div id="death" class="hidden"><div class="d-title">You have been defeated</div><div class="d-sub">Even the best priors get updated.</div><button id="releaseBtn" class="btn primary">Respawn at capital</button></div>
+  <div id="tooltip" class="hidden"></div>
+  <div id="disconnect" class="hidden"><div>Disconnected from the realm.</div><button class="btn primary" onclick="location.reload()">Reconnect</button></div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
