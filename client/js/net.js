@@ -1,7 +1,7 @@
 import { World } from '../shared/world.js';
 
 // Shared online realm used by the GitHub Pages build (free Render instance; it sleeps when idle).
-export const DEFAULT_REALM = null;
+export const DEFAULT_REALM = 'wss://singularity-online.onrender.com/ws';
 
 export class Net {
   constructor(terrain) {
