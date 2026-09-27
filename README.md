@@ -73,6 +73,16 @@ Phones default to a **Mobile** graphics preset. It uses capped resolution, light
 
 Graphics quality adapts automatically. You can also change it in Settings (Esc). Dev views: `?gallery=champs`, `?gallery=mobs`.
 
+## Trailer
+
+The 48-second launch trailer is rendered in-engine by `tools/trailer`, with no editing software, stock footage or audio samples:
+
+- `virtual-time.js` replaces the page clock so every frame advances exactly 1/30 s. Capture is deterministic whatever the GPU speed.
+- `director.js` drives the offline realm. It stages champions and monsters, forces ability casts, flies the camera, sets time of day and shadow focus, and draws the titles.
+- `shots.js` is the shot list: 18 shots on a 120 BPM grid. A spot solver picks flat, clear, sun-lit locations for the champion shots.
+- `music.js` synthesizes the score with an `OfflineAudioContext`: drums, braams, a string ostinato, choir and risers. It places ability sound effects on the exact frames of the combat events logged during capture. `receiver.js` saves the WAV and event log locally.
+- Frames are captured with Playwright at 1.5× supersampling, then encoded with ffmpeg (H.264 1080p30 and AAC).
+
 ## License
 
 MIT; see [LICENSE](LICENSE). The bundled three.js keeps its own MIT license.
