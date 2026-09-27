@@ -167,7 +167,7 @@ export class World {
     const client = { id: p.id, send, known: new Set(), meTick: 0 };
     this.clients.set(p.id, client);
     send({ t: 'welcome', id: p.id, name: p.name, champion, time: this.time, dayTime: this.dayTime, dayLength: DAY_LENGTH, seed: this.terrain.seed });
-    this._sys(p, `Welcome to Singularity Online, ${p.name}. Press H for help.`);
+    this._sys(p, `Welcome to Singularity Online, ${p.name}. Press H (or tap ?) for help.`);
     this._broadcastChat(null, `${p.name} the ${p.ch.name} (${FACTIONS[p.faction].short}) has entered the realm.`, 'sys');
     return p.id;
   }

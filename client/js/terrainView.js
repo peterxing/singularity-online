@@ -49,13 +49,15 @@ export class TerrainView {
       ...GRASS_COLORS,
     };
     this.uniforms = uniforms;
+    this.lq = !!gfx.q.lq;
     const mat = new THREE.MeshStandardMaterial({ roughness: 0.95, metalness: 0.0 });
+    mat.customProgramCacheKey = () => (this.lq ? 'terrain-lq' : 'terrain-hq');
     mat.onBeforeCompile = (shader) => {
       Object.assign(shader.uniforms, uniforms);
       shader.vertexShader = shader.vertexShader
         .replace('#include <common>', '#include <common>\nvarying vec3 vWPos;\nvarying vec3 vWNormal;')
         .replace('#include <worldpos_vertex>', '#include <worldpos_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvWNormal = normalize((modelMatrix * vec4(objectNormal, 0.0)).xyz);');
-      shader.fragmentShader = shader.fragmentShader
+      shader.fragmentShader = (this.lq ? '#define TINT_LQ\n#define TERRAIN_LQ\n' : '') + shader.fragmentShader
         .replace('#include <common>', `#include <common>
 uniform sampler2D uSplat; uniform sampler2D uGrassMap; uniform vec4 uWorld; uniform float uRes;
 uniform vec3 uForestA, uForestB, uDirtA, uDirtB, uFieldA, uFieldB, uSandA, uSandB, uRockA, uRockB, uSnow, uCobA, uCobB;
@@ -78,7 +80,11 @@ vec4 sp = texture2D(uSplat, guv);
 vec4 gm = texture2D(uGrassMap, guv);
 vec3 wn = normalize(vWNormal);
 float slope = 1.0 - clamp(wn.y, 0.0, 1.0);
+#ifdef TERRAIN_LQ
+float n1 = vnoise(wp * 0.03);
+#else
 float n1 = fbm2(wp * 0.03);
+#endif
 float n2 = vnoise(wp * 0.37);
 float n3 = vnoise(wp * 2.3);
 vec3 tcol = grassTint(wp) * (0.78 + 0.24 * n2);
@@ -91,7 +97,15 @@ float peb = smoothstep(0.74, 0.8, vnoise(wp * 9.0)) * smoothstep(0.3, 0.7, vnois
 dirt = mix(dirt, uRockB * 0.85, peb * 0.35);
 float wRoad = smoothstep(0.1, 0.9, sp.r);
 tcol = mix(tcol, dirt, wRoad);
+#ifdef TERRAIN_LQ
+vec2 cgr = wp * 1.15;
+cgr.x += step(0.5, fract(cgr.y * 0.5)) * 0.5;
+vec2 cfr = fract(cgr);
+float cedge = min(min(cfr.x, 1.0 - cfr.x), min(cfr.y, 1.0 - cfr.y));
+vec2 vr = vec2(cedge * 0.6, hash12(floor(cgr)));
+#else
 vec2 vr = voronoi(wp * 1.15);
+#endif
 float grout = smoothstep(0.02, 0.1, vr.x);
 vec3 cob = mix(uCobA, uCobB, vr.y) * (0.9 + 0.2 * n3);
 cob = mix(uCobB * 0.42, cob, grout);
@@ -120,7 +134,7 @@ tRough = mix(tRough, 0.5, smoothstep(0.7, 0.05, vWPos.y) * wSand);
 float tBump = (1.0 - grout) * -0.05 * wPl + (rn2 * 0.35 + rn3 * 0.12 - crev * 0.15) * wRock + n3 * 0.02 + peb * 0.03 * wRoad;
 `)
         .replace('#include <roughnessmap_fragment>', 'float roughnessFactor = tRough;')
-        .replace('#include <normal_fragment_maps>', 'normal = bumpN(-vViewPosition, normal, tBump);');
+        .replace('#include <normal_fragment_maps>', '#ifndef TERRAIN_LQ\nnormal = bumpN(-vViewPosition, normal, tBump);\n#endif');
     };
     this.material = mat;
     this.chunks = [];
@@ -167,6 +181,12 @@ float tBump = (1.0 - grout) * -0.05 * wPl + (rn2 * 0.35 + rn3 * 0.12 - crev * 0.
         this.chunks.push(m);
       }
     }
+  }
+
+  setLQ(v) {
+    if (this.lq === !!v) return;
+    this.lq = !!v;
+    this.material.needsUpdate = true;
   }
 
   _normals() {

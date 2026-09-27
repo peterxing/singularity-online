@@ -2,7 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Singularity" />
+  <link rel="manifest" href="manifest.webmanifest" />
   <title>Singularity Online — Accelerate or Align</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M32 4 L56 32 L32 60 L8 32 Z' fill='%236fe3ff' stroke='%23e8c46a' stroke-width='4'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="css/style.css" />
@@ -121,6 +127,17 @@
   <div id="help" class="panel hidden"></div>
   <div id="death" class="hidden"><div class="d-title">You have been defeated</div><div class="d-sub">Even the best priors get updated.</div><button id="releaseBtn" class="btn primary">Respawn at capital</button></div>
   <div id="tooltip" class="hidden"></div>
+  <div id="touch" class="hidden">
+    <div id="tStick" class="idle"><div id="tKnob"></div></div>
+    <div id="tCluster">
+      <div id="tAbilities"></div>
+      <button class="tbtn" id="tJump" aria-label="Jump"></button>
+      <button class="tbtn" id="tTarget" aria-label="Next target"></button>
+      <button class="tbtn" id="tUse" aria-label="Talk or gather"></button>
+    </div>
+    <div id="tTop"><button class="tbtn small" id="tChat" aria-label="Chat"></button><button class="tbtn small" id="tFull" aria-label="Fullscreen"></button></div>
+  </div>
+  <div id="rotateHint" class="hidden"></div>
   <div id="disconnect" class="hidden"><div>Disconnected from the realm.</div><button class="btn primary" onclick="location.reload()">Reconnect</button></div>
 
   <script type="module" src="js/main.js"></script>

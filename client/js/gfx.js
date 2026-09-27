@@ -9,11 +9,13 @@ import { setupChunks } from './glsl.js';
 
 const dpr = Math.min(window.devicePixelRatio || 1, 2);
 export const QUALITY = {
-  low: { label: 'Low', pixelRatio: Math.min(dpr, 1) * 0.75, shadow: 1024, shadowRange: 42, grassNear: 45000, grassFar: 30000, grassR: [20, 55], bloom: true, smaa: false, treeDist: 300, flowers: 3000 },
-  medium: { label: 'Medium', pixelRatio: Math.min(dpr, 1), shadow: 2048, shadowRange: 55, grassNear: 90000, grassFar: 70000, grassR: [24, 70], bloom: true, smaa: true, treeDist: 420, flowers: 6000 },
-  high: { label: 'High', pixelRatio: Math.min(dpr, 1.35), shadow: 4096, shadowRange: 65, grassNear: 150000, grassFar: 120000, grassR: [26, 85], bloom: true, smaa: true, treeDist: 560, flowers: 9000 },
-  ultra: { label: 'Ultra', pixelRatio: dpr, shadow: 4096, shadowRange: 80, grassNear: 230000, grassFar: 180000, grassR: [30, 100], bloom: true, smaa: true, treeDist: 700, flowers: 14000 },
+  low: { label: 'Low', pixelRatio: Math.min(dpr, 1) * 0.75, shadow: 1024, shadowRange: 34, grassNear: 22000, grassFar: 12000, grassR: [15, 42], bloom: true, smaa: false, treeDist: 200, flowers: 1200, lights: 1, fogMul: 1.4, lq: true, envInterval: 40, plateRange: 0.6 },
+  mobile: { label: 'Mobile', pixelRatio: Math.min(window.devicePixelRatio || 1, 1.35), shadow: 1024, shadowRange: 36, grassNear: 34000, grassFar: 18000, grassR: [17, 48], bloom: true, smaa: false, treeDist: 240, flowers: 2000, lights: 2, fogMul: 1.25, lq: true, envInterval: 30, plateRange: 0.7 },
+  medium: { label: 'Medium', pixelRatio: Math.min(dpr, 1), shadow: 2048, shadowRange: 55, grassNear: 90000, grassFar: 70000, grassR: [24, 70], bloom: true, smaa: true, treeDist: 420, flowers: 6000, lights: 3, fogMul: 1, lq: false, envInterval: 6, plateRange: 1 },
+  high: { label: 'High', pixelRatio: Math.min(dpr, 1.35), shadow: 4096, shadowRange: 65, grassNear: 150000, grassFar: 120000, grassR: [26, 85], bloom: true, smaa: true, treeDist: 560, flowers: 9000, lights: 4, fogMul: 1, lq: false, envInterval: 6, plateRange: 1 },
+  ultra: { label: 'Ultra', pixelRatio: dpr, shadow: 4096, shadowRange: 80, grassNear: 230000, grassFar: 180000, grassR: [30, 100], bloom: true, smaa: true, treeDist: 700, flowers: 14000, lights: 4, fogMul: 1, lq: false, envInterval: 6, plateRange: 1 },
 };
+export const QUALITY_ORDER = ['low', 'mobile', 'medium', 'high', 'ultra'];
 
 const GradeShader = {
   uniforms: {
@@ -68,6 +70,8 @@ export class Gfx {
     this.bloomOn = true;
     this._buildComposer();
     window.addEventListener('resize', () => this.resize());
+    window.addEventListener('orientationchange', () => setTimeout(() => this.resize(), 250));
+    if (window.visualViewport) window.visualViewport.addEventListener('resize', () => this.resize());
     this.resize();
   }
 
@@ -95,11 +99,14 @@ export class Gfx {
 
   resize() {
     const w = window.innerWidth, h = window.innerHeight;
+    if (w === this._w && h === this._h && this._pr === this.q.pixelRatio) return;
+    this._w = w; this._h = h; this._pr = this.q.pixelRatio;
     this.renderer.setPixelRatio(this.q.pixelRatio);
     this.renderer.setSize(w, h, false);
     this.composer.setPixelRatio(this.q.pixelRatio);
     this.composer.setSize(w, h);
     this.camera.aspect = w / h;
+    this.camera.fov = w < h ? Math.min(76, 58 + (1 - w / h) * 40) : 58;
     this.camera.updateProjectionMatrix();
   }
 

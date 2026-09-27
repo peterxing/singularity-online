@@ -41,7 +41,11 @@ uniform vec3 uGrassA;
 uniform vec3 uGrassB;
 uniform vec3 uGrassC;
 vec3 grassTint(vec2 wp) {
+#ifdef TINT_LQ
+  float n = vnoise(wp * 0.011);
+#else
   float n = fbm2(wp * 0.011);
+#endif
   float m = vnoise(wp * 0.045 + 3.7);
   vec3 c = mix(uGrassB, uGrassA, smoothstep(0.3, 0.7, n));
   c = mix(c, uGrassC, smoothstep(0.62, 0.92, m) * 0.55);

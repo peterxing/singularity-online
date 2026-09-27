@@ -281,7 +281,7 @@ export class Entities {
   _plate(v, dist, camera, w, h, myFaction, targetId) {
     const el = v.plate;
     const isMe = v.id === this.meId;
-    const range = v.kind === 'player' ? 80 : v.kind === 'npc' ? 50 : v.info.bs ? 120 : 55;
+    const range = (v.kind === 'player' ? 80 : v.kind === 'npc' ? 50 : v.info.bs ? 120 : 55) * (this.g.gfx.q.plateRange || 1);
     const bubble = v.bubbleUntil > performance.now();
     if (!this.showPlates || !v.obj.visible || dist > range || (isMe && !bubble) || v.kind === 'node' || (v.dead && v.kind !== 'player')) { if (el.style.display !== 'none') el.style.display = 'none'; return; }
     tmp.set(v.pos.x, v.pos.y + v.height + 0.35, v.pos.z).project(camera);

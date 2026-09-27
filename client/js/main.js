@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import { Terrain, SITES } from '../shared/terrain.js';
 import { CHAMPIONS, ABILITIES, FACTIONS, MOBS, NPCS, QUESTS, ITEMS } from '../shared/data.js';
 import { FLAGS } from '../shared/world.js';
-import { Gfx, QUALITY } from './gfx.js';
+import { Gfx, QUALITY, QUALITY_ORDER } from './gfx.js';
+import { isTouchDevice, TouchControls } from './touch.js';
 import { Sky } from './sky.js';
 import { TerrainView, makeGridTextures } from './terrainView.js';
 import { Water } from './water.js';
@@ -44,6 +45,12 @@ class Game {
   }
 
   async boot() {
+    this.touch = isTouchDevice();
+    document.body.classList.toggle('touch', this.touch);
+    const orient = () => document.body.classList.toggle('portrait', window.innerHeight > window.innerWidth);
+    orient();
+    window.addEventListener('resize', orient);
+    if (this.touch) this.homeScreenIcon();
     this.ui = new UI(this);
     this.audio = new Audio();
     this.ui.loading(3, 'Warming up the renderer…');
@@ -105,10 +112,28 @@ class Game {
     requestAnimationFrame(() => this.loop());
   }
 
+  // iOS ignores SVG touch icons, so rasterise the vector icon for "Add to Home Screen".
+  homeScreenIcon() {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const c = document.createElement('canvas');
+        c.width = c.height = 180;
+        c.getContext('2d').drawImage(img, 0, 0, 180, 180);
+        const link = document.createElement('link');
+        link.rel = 'apple-touch-icon';
+        link.href = c.toDataURL('image/png');
+        document.head.appendChild(link);
+      } catch { /* optional */ }
+    };
+    img.src = 'icon.svg';
+  }
+
   loadSettings() {
     let s = {};
     try { s = JSON.parse(localStorage.getItem('so_settings') || '{}'); } catch { s = {}; }
     if (s.quality && QUALITY[s.quality]) { this.gfx.setQuality(s.quality); this.qualityCheck.done = true; }
+    else if (this.touch) this.gfx.setQuality('mobile');
     if (s.bloom === false) this.gfx.bloomOn = false;
     this.showFps = !!s.fps;
     document.getElementById('fps').classList.toggle('hidden', !this.showFps);
@@ -126,6 +151,7 @@ class Game {
     this.gfx.setQuality(key);
     this.sky.applyShadowQuality();
     this.grass.build(this.gfx.q);
+    this.terrainView.setLQ(this.gfx.q.lq);
     this.qualityCheck.done = true;
     this.saveSettings();
   }
@@ -279,7 +305,10 @@ class Game {
     const cam = this.gfx.camera;
     this.previewT += dt;
     const sway = Math.sin(this.time * 0.25) * 0.35;
-    cam.position.copy(this.selCam).add(tmp.set(Math.cos(this.time * 0.2) * 0.4, Math.sin(this.time * 0.3) * 0.15, 0));
+    const back = Math.max(1, 1.15 / cam.aspect);
+    tmp2.subVectors(this.selCam, this.selTarget).multiplyScalar(back).add(this.selTarget);
+    if (back > 1) tmp2.y += (back - 1) * 0.6;
+    cam.position.copy(tmp2).add(tmp.set(Math.cos(this.time * 0.2) * 0.4, Math.sin(this.time * 0.3) * 0.15, 0));
     cam.lookAt(this.selTarget);
     if (this.preview) {
       const m = this.preview;
@@ -326,11 +355,15 @@ class Game {
     this.ui.hideSelect();
     this.ui.initHud(m.champion, m.name);
     this.ctrl.speed = CHAMPIONS[m.champion].speed;
-    this.ctrl.camPitch = 0.28;
-    this.ctrl.dist = this.ctrl.distCur = 9;
+    this.ctrl.camPitch = this.touch ? 0.34 : 0.28;
+    this.ctrl.dist = this.ctrl.distCur = this.touch ? 10.5 : 9;
+    if (this.touch && !this.touchCtl) {
+      this.touchCtl = new TouchControls(this);
+      if (window.innerHeight > window.innerWidth) this.ui.hint('Tip: rotate to landscape for the widest view', 5000);
+    }
     this.sky.override = this.settings.tod || 'auto';
     this.ui.chat(`Connected to ${this.mode === 'online' ? 'the Latent Space realm' : 'the solo realm, where simulated players roam'}. Welcome, ${m.name}!`, 'sys');
-    this.ui.chat('Talk to NPCs with a gold ! to get quests. Press H for controls.', 'sys');
+    this.ui.chat(this.touch ? 'Left thumb moves, drag to look, pinch to zoom, tap NPCs with a gold ! for quests.' : 'Talk to NPCs with a gold ! to get quests. Press H for controls.', 'sys');
     this.audio.faction = this.faction;
   }
 
@@ -564,6 +597,19 @@ class Game {
     if (isHostile(this.faction, v) && !v.dead) { this.faceTarget(v); this.net.send({ t: 'aa', on: true }); }
   }
 
+  onTap(x, y) {
+    if (this.selectMode || !this.me) return;
+    const v = this.ents.pick(x, y, this.gfx.camera);
+    if (!v) return;
+    const d = v.pos.distanceTo(this.ctrl.pos);
+    const already = this.targetId === v.id;
+    this.setTarget(v.id);
+    this.audio.play('click');
+    if (v.kind === 'npc') { if (d < 9) this.ui.openNpc(v); else if (already) this.ui.error('Walk closer to talk.'); return; }
+    if (v.kind === 'node') { if (d < 5) this.net.send({ t: 'use', id: v.id }); else if (already) this.ui.error('Walk closer to gather.'); return; }
+    if (already && isHostile(this.faction, v) && !v.dead) { this.faceTarget(v); this.net.send({ t: 'aa', on: true }); }
+  }
+
   faceTarget(v) {
     const c = this.ctrl;
     c.yaw = Math.atan2(v.pos.x - c.pos.x, v.pos.z - c.pos.z);
@@ -722,8 +768,9 @@ class Game {
       this.nearLights = this.buildings.lights.map((l) => ({ l, d: l.pos.distanceTo(cp) })).filter((x) => x.d < 70).sort((a, b) => a.d - b.d).slice(0, this.lights.length);
     }
     const list = this.nearLights || [];
+    const maxL = this.gfx.q.lights ?? this.lights.length;
     this.lights.forEach((pl, i) => {
-      const x = list[i];
+      const x = i < maxL ? list[i] : null;
       if (!x) { pl.intensity = 0; return; }
       pl.position.copy(x.l.pos);
       pl.color.copy(x.l.color);
@@ -745,9 +792,10 @@ class Game {
         qc.t += 0.5; qc.frames += fps;
         if (qc.t >= 8) {
           const avg = qc.frames / (qc.t / 0.5);
-          const order = ['low', 'medium', 'high', 'ultra'];
+          const order = QUALITY_ORDER;
           const i = order.indexOf(this.gfx.qualityKey);
-          if (avg < 30 && i > 0) { this.setQuality(order[i - 1]); this.ui.chat(`Graphics quality lowered to ${QUALITY[order[i - 1]].label} for smoother play (change in Settings).`, 'sys'); qc.done = false; qc.t = 0; qc.frames = 0; }
+          const floor = this.touch ? 22 : 30;
+          if (avg < floor && i > 0) { this.setQuality(order[i - 1]); this.ui.chat(`Graphics quality lowered to ${QUALITY[order[i - 1]].label} for smoother play (change in Settings).`, 'sys'); qc.done = false; qc.t = 0; qc.frames = 0; }
           else qc.done = true;
         }
       }

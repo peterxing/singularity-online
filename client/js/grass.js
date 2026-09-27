@@ -69,9 +69,10 @@ export class Grass {
   _material(layerUniforms, flower = false) {
     const mat = new THREE.MeshLambertMaterial({ side: THREE.DoubleSide });
     const shared = this.shared;
+    const lq = !!this.lq;
     mat.onBeforeCompile = (shader) => {
       Object.assign(shader.uniforms, shared, layerUniforms);
-      const head = `#include <common>
+      const head = `${lq ? '#define TINT_LQ\n' : ''}#include <common>
 uniform float uTime; uniform vec2 uCam; uniform float uPatch; uniform vec4 uRange;
 uniform float uWidth; uniform float uWiden; uniform float uFar; uniform float uHScale;
 uniform sampler2D uGrassMap; uniform vec4 uPush[6];
@@ -167,7 +168,7 @@ vGColor = aPart < 0.5 ? grassTint(g_wp) * 0.9 : (aPart < 1.5 ? g_petal : vec3(1.
         .replace('#include <normal_fragment_begin>', '#include <normal_fragment_begin>\nnormal = normalize(vNormal);')
         .replace('#include <lights_fragment_begin>', THREE_CHUNKS.lights_fragment_begin_patched(flower ? '0.3' : '0.6', '3.0'));
     };
-    mat.customProgramCacheKey = () => (flower ? 'flower-v1' : 'grass-v1');
+    mat.customProgramCacheKey = () => (flower ? 'flower-v1' : 'grass-v1') + (lq ? '-lq' : '');
     return mat;
   }
 
@@ -197,6 +198,7 @@ vGColor = aPart < 0.5 ? grassTint(g_wp) * 0.9 : (aPart < 1.5 ? g_petal : vec3(1.
 
   build(q) {
     for (const l of this.layers) { this.gfx.scene.remove(l.mesh); l.mesh.geometry.dispose(); l.mesh.material.dispose(); }
+    this.lq = !!q.lq;
     const [r1, r2] = q.grassR;
     this.layers = [
       this._layer({ segs: 4, count: q.grassNear, patch: r1 * 2, range: [r1 * 0.72, r1, 1e5, 1e5 + 1], width: 0.075, widen: 0.004, far: false }),

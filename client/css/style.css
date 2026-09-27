@@ -4,8 +4,8 @@
   --font: 'Segoe UI', 'Trebuchet MS', system-ui, sans-serif; --serif: Georgia, 'Palatino Linotype', 'Book Antiqua', serif;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: var(--text); font-family: var(--font); user-select: none; }
-#game { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #000; color: var(--text); font-family: var(--font); user-select: none; -webkit-user-select: none; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+#game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 .hidden { display: none !important; }
 button { font-family: var(--font); cursor: pointer; }
 
@@ -36,7 +36,7 @@ button { font-family: var(--font); cursor: pointer; }
 #select { position: fixed; inset: 0; z-index: 20; pointer-events: none; }
 #select > * { pointer-events: auto; }
 .sel-top { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; }
-.realm { margin-top: 6px; font-size: 13px; color: var(--dim); background: rgba(0,0,0,0.45); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.12); }
+.realm { margin-top: 6px; font-size: 13px; color: var(--dim); background: rgba(0,0,0,0.45); padding: 4px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.12); white-space: nowrap; }
 .realm.online { color: #8dff9a; } .realm.offline { color: #ffd36b; }
 .sel-left { position: absolute; left: 24px; top: 110px; width: 300px; padding: 6px 16px 16px; }
 .factions { display: flex; gap: 10px; }
@@ -234,3 +234,166 @@ button { font-family: var(--font); cursor: pointer; }
 #tooltip .tt-meta { color: var(--dim); margin: 3px 0 6px; }
 #tooltip .tt-desc { color: #ffd98a; }
 #disconnect { position: fixed; inset: 0; z-index: 70; background: rgba(0,0,0,0.75); display: flex; flex-direction: column; gap: 18px; align-items: center; justify-content: center; font-size: 22px; font-family: var(--serif); }
+
+/* =====================================================================
+   Touch / mobile layout
+   ===================================================================== */
+#rotateHint { position: fixed; top: 38%; left: 50%; transform: translateX(-50%); z-index: 26; pointer-events: none; background: rgba(8,10,18,0.92); border: 1px solid var(--gold2); color: #ffe7a8; padding: 10px 18px; border-radius: 20px; font-size: 13px; box-shadow: 0 6px 20px rgba(0,0,0,0.6); }
+.panel, #chatLog, #dialog, #questLog, #settings, #help { touch-action: pan-y; -webkit-overflow-scrolling: touch; }
+body.touch { -webkit-touch-callout: none; }
+body.touch input, body.touch textarea { -webkit-user-select: text; user-select: text; }
+
+#touch { position: fixed; inset: 0; z-index: 12; pointer-events: none; }
+#tStick { position: fixed; width: 128px; height: 128px; margin: -64px 0 0 -64px; left: calc(96px + env(safe-area-inset-left)); top: calc(100% - 100px - env(safe-area-inset-bottom)); border-radius: 50%; border: 2px solid rgba(232,196,106,0.5); background: radial-gradient(circle, rgba(111,227,255,0.12), rgba(0,0,0,0.32) 72%); pointer-events: none; transition: opacity 0.15s; }
+#tStick.idle { opacity: 0.5; }
+#tStick.on { opacity: 1; }
+#tKnob { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff6d0, #e8c46a 45%, #8a5a1a); box-shadow: 0 0 14px rgba(232,196,106,0.55), inset 0 -3px 6px rgba(0,0,0,0.4); }
+.tbtn { position: absolute; pointer-events: auto; touch-action: none; width: 54px; height: 54px; border-radius: 50%; border: 2px solid var(--gold2); background: radial-gradient(circle at 40% 35%, rgba(60,48,24,0.95), rgba(12,9,4,0.95)); color: #ffe7a8; display: flex; align-items: center; justify-content: center; padding: 13px; box-shadow: 0 4px 14px rgba(0,0,0,0.6); }
+.tbtn svg { width: 100%; height: 100%; display: block; }
+.tbtn.small { position: static; width: 40px; height: 40px; padding: 10px; }
+.tbtn.press, #tAbilities .slot.press { transform: scale(0.9); filter: brightness(1.35); }
+#tTop { display: none; }
+#tCluster { position: fixed; right: calc(12px + env(safe-area-inset-right)); bottom: calc(10px + env(safe-area-inset-bottom)); width: 250px; height: 250px; pointer-events: none; transform-origin: 100% 100%; }
+#tAbilities { position: absolute; inset: 0; pointer-events: none; }
+#tAbilities .slot { position: absolute; pointer-events: auto; touch-action: none; width: 58px; height: 58px; border-radius: 50%; border: 2px solid var(--gold2); box-shadow: 0 4px 14px rgba(0,0,0,0.65); }
+#tAbilities .slot img { border-radius: 50%; }
+#tAbilities .slot .cd { border-radius: 50%; }
+#tAbilities .slot .key { display: none; }
+#tAbilities .slot:nth-child(1) { width: 84px; height: 84px; right: 8px; bottom: 8px; border-width: 3px; box-shadow: 0 0 18px rgba(232,196,106,0.35), 0 4px 14px rgba(0,0,0,0.65); }
+#tAbilities .slot:nth-child(1) .cdt { font-size: 26px; }
+#tAbilities .slot:nth-child(2) { right: 121px; bottom: 21px; }
+#tAbilities .slot:nth-child(3) { right: 108px; bottom: 71px; }
+#tAbilities .slot:nth-child(4) { right: 71px; bottom: 108px; }
+#tAbilities .slot:nth-child(5) { right: 21px; bottom: 121px; }
+#tAbilities .slot:nth-child(6) { width: 46px; height: 46px; right: 192px; bottom: 27px; }
+#tJump { right: 23px; bottom: 188px; }
+#tTarget { right: 140px; bottom: 140px; }
+#tUse { right: 87px; bottom: 181px; }
+
+body.touch #actionBar { display: none; }
+body.touch #bottomBar { left: 0; right: 0; bottom: 0; transform: none; }
+body.touch #xpBar { position: fixed; top: 0; left: 0; right: 0; width: auto; height: 5px; margin: 0; border-radius: 0; box-shadow: none; border: none; z-index: 11; }
+body.touch #xpBar span { display: none; }
+body.touch .menu-btns { position: fixed; top: calc(8px + env(safe-area-inset-top)); right: calc(160px + env(safe-area-inset-right)); left: auto; bottom: auto; transform: none; gap: 6px; }
+body.touch .menu-btns button { width: 40px; height: 40px; font-size: 16px; border-radius: 50%; }
+body.touch .unitframe { transform: scale(0.72); transform-origin: top left; top: calc(10px + env(safe-area-inset-top)); left: calc(8px + env(safe-area-inset-left)); }
+body.touch .unitframe.target { left: calc(222px + env(safe-area-inset-left)); }
+body.touch .aura-row { top: calc(66px + env(safe-area-inset-top)); left: calc(64px + env(safe-area-inset-left)); transform: scale(0.8); transform-origin: top left; }
+body.touch .aura-row.target { left: calc(240px + env(safe-area-inset-left)); }
+body.touch #minimapWrap { transform: scale(0.62); transform-origin: top right; top: calc(6px + env(safe-area-inset-top)); right: calc(6px + env(safe-area-inset-right)); }
+body.touch #gold { top: calc(178px + env(safe-area-inset-top)); bottom: auto; right: calc(10px + env(safe-area-inset-right)); font-size: 11px; padding: 2px 8px; }
+body.touch #questTracker { top: calc(206px + env(safe-area-inset-top)); right: calc(10px + env(safe-area-inset-right)); width: 190px; max-height: 28vh; overflow: hidden; pointer-events: auto; }
+body.touch #questTracker .qn { font-size: 12px; }
+body.touch #questTracker .qo { font-size: 11px; }
+body.touch #questTracker.collapsed .qo { display: none; }
+body.touch #chat { left: calc(10px + env(safe-area-inset-left)); bottom: auto; top: calc(96px + env(safe-area-inset-top)); width: min(330px, 44vw); pointer-events: none; }
+body.touch #chatLog { height: 84px; font-size: 11px; background: linear-gradient(90deg, rgba(0,0,0,0.55), rgba(0,0,0,0.32) 65%, rgba(0,0,0,0)); padding: 3px 6px; overflow: hidden; border-radius: 6px; display: flex; flex-direction: column; justify-content: flex-end; }
+body.touch #chatInput { display: none; }
+body.touch.chat-open #chat { pointer-events: auto; top: calc(56px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); width: min(560px, 92vw); z-index: 40; background: rgba(8,10,18,0.94); border: 1px solid var(--gold2); border-radius: 10px; padding: 8px; }
+body.touch.chat-open #chatLog { display: block; height: min(34vh, 220px); font-size: 13px; overflow-y: auto; }
+body.touch.chat-open #chatInput { display: block; opacity: 1; font-size: 16px; }
+body.touch #castBar { bottom: 34%; width: 240px; height: 18px; }
+body.touch #castBar #castText, body.touch #castBar #castTime { line-height: 18px; font-size: 11px; }
+body.touch #bossBar { top: calc(54px + env(safe-area-inset-top)); width: min(420px, 56vw); }
+body.touch .boss-name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.touch .zt-main { font-size: 28px; }
+body.touch .zt-sub { font-size: 11px; }
+body.touch #zoneText { top: 22%; }
+body.touch #bannerText .b1 { font-size: 34px; }
+body.touch #bannerText .b2 { font-size: 13px; }
+body.touch #errorText { top: 30%; font-size: 14px; }
+body.touch .plate .pn { font-size: 11px; }
+body.touch .plate .pt { font-size: 9px; }
+body.touch .plate .ph { width: 70px; height: 6px; }
+body.touch .fct { font-size: 17px; }
+body.touch .fct.crit { font-size: 25px; }
+body.touch .d-title { font-size: 30px; }
+body.touch #dialog, body.touch #questLog, body.touch #settings, body.touch #help { width: min(540px, 94vw); max-height: 86vh; padding: 14px; }
+body.touch #dialog .qtext { font-size: 14px; }
+body.touch #dialog .q { padding: 11px 10px; }
+body.touch #settings label { font-size: 13px; }
+body.touch #settings select, body.touch #settings input[type=range] { width: 48%; }
+body.touch .close-x { width: 36px; height: 36px; top: 6px; right: 6px; }
+body.touch #worldMapCanvas { width: min(84vh, 92vw); height: min(84vh, 92vw); }
+body.touch #tooltip { max-width: 250px; font-size: 12px; }
+
+/* short landscape phones */
+@media (max-height: 460px) {
+  body.touch #tCluster { transform: scale(0.8); }
+  body.touch #tStick { transform: scale(0.85); }
+  body.touch .unitframe { transform: scale(0.6); }
+  body.touch .unitframe.target { left: calc(188px + env(safe-area-inset-left)); }
+  body.touch .aura-row { top: calc(54px + env(safe-area-inset-top)); left: calc(54px + env(safe-area-inset-left)); transform: scale(0.7); }
+  body.touch .aura-row.target { display: none; }
+  body.touch #minimapWrap { transform: scale(0.5); }
+  body.touch #gold { top: calc(146px + env(safe-area-inset-top)); }
+  body.touch #questTracker { top: calc(52px + env(safe-area-inset-top)); right: calc(132px + env(safe-area-inset-right)); width: 230px; max-height: min(110px, calc(100vh - 262px)); }
+  body.touch #chat { top: calc(80px + env(safe-area-inset-top)); }
+  body.touch #chatLog { height: 66px; }
+  body.touch .menu-btns button, body.touch .tbtn.small { width: 36px; height: 36px; }
+  body.touch .menu-btns { right: calc(132px + env(safe-area-inset-right)); }
+  body.touch #bossBar { top: calc(92px + env(safe-area-inset-top)); width: min(380px, 48vw); }
+  body.touch.boss-on #questTracker { display: none; }
+  body.touch.boss-on #chat { top: calc(142px + env(safe-area-inset-top)); }
+}
+@media (max-height: 460px) and (max-width: 760px) {
+  body.touch .menu-btns { display: grid; grid-template-columns: repeat(3, 36px); }
+  body.touch #questTracker { top: calc(92px + env(safe-area-inset-top)); width: 200px; max-height: min(68px, calc(100vh - 302px)); }
+}
+@media (max-height: 380px) {
+  body.touch #tCluster { transform: scale(0.72); }
+  body.touch #tStick { transform: scale(0.78); }
+}
+
+/* portrait phones */
+body.touch.portrait .unitframe.target { left: calc(8px + env(safe-area-inset-left)); top: calc(66px + env(safe-area-inset-top)); }
+body.touch.portrait .aura-row { top: calc(122px + env(safe-area-inset-top)); left: calc(10px + env(safe-area-inset-left)); }
+body.touch.portrait .aura-row.target { display: none; }
+body.touch.portrait #chat { top: calc(150px + env(safe-area-inset-top)); width: calc(56vw - 18px); }
+body.touch.portrait #questTracker { top: calc(172px + env(safe-area-inset-top)); right: calc(8px + env(safe-area-inset-right)); width: calc(44vw - 8px); max-height: 30vh; }
+body.touch.portrait #tCluster { transform: scale(0.86); }
+body.touch.portrait .menu-btns { top: auto; bottom: calc(262px + env(safe-area-inset-bottom)); right: calc(8px + env(safe-area-inset-right)); display: grid; grid-template-columns: repeat(2, 40px); }
+body.touch.portrait #bossBar { width: 92vw; top: calc(172px + env(safe-area-inset-top)); }
+body.touch.portrait.boss-on #questTracker { display: none; }
+body.touch.portrait.boss-on #chat { top: calc(222px + env(safe-area-inset-top)); }
+body.touch.portrait.chat-open #chat { top: calc(56px + env(safe-area-inset-top)); width: 92vw; }
+
+/* character select on touch */
+body.touch .sel-top { top: calc(6px + env(safe-area-inset-top)); }
+body.touch .logo.small .l1 { font-size: 20px; letter-spacing: 4px; }
+body.touch .logo.small .l2 { font-size: 10px; letter-spacing: 8px; }
+body.touch .realm { font-size: 10px; margin-top: 3px; padding: 3px 10px; max-width: 90vw; text-align: center; }
+body.touch .sel-left { left: calc(8px + env(safe-area-inset-left)); top: calc(64px + env(safe-area-inset-top)); width: 240px; padding: 2px 10px 10px; max-height: calc(100% - 150px); overflow-y: auto; }
+body.touch .panel-title { margin: 8px 0 6px; font-size: 11px; }
+body.touch .fac { padding: 6px 4px; }
+body.touch .fac b { font-size: 17px; }
+body.touch .fac small { font-size: 9px; }
+body.touch .motto { display: none; }
+body.touch .champ-list { grid-template-columns: repeat(4, 1fr); gap: 5px; }
+body.touch .champ span { font-size: 8px; padding: 2px 1px; }
+body.touch .sel-right { right: calc(8px + env(safe-area-inset-right)); top: calc(64px + env(safe-area-inset-top)); width: min(300px, 38vw); max-height: calc(100% - 150px); padding: 10px 12px; }
+body.touch .champ-name { font-size: 20px; }
+body.touch .champ-title { font-size: 12px; }
+body.touch .champ-bio { font-size: 12px; margin-top: 6px; line-height: 1.4; }
+body.touch .champ-abilities .ab { gap: 8px; margin-bottom: 6px; }
+body.touch .champ-abilities img { width: 28px; height: 28px; }
+body.touch .champ-abilities b { font-size: 12px; }
+body.touch .champ-abilities p { font-size: 10px; }
+body.touch .sel-bottom { bottom: calc(24px + env(safe-area-inset-bottom)); padding: 8px; gap: 6px; }
+body.touch #heroName { width: 168px; font-size: 16px; padding: 8px 10px; }
+body.touch .btn { padding: 9px 14px; font-size: 14px; }
+body.touch .disclaimer { bottom: calc(5px + env(safe-area-inset-bottom)); font-size: 9px; }
+@media (max-height: 460px) {
+  body.touch .sel-top .logo { display: none; }
+  body.touch .sel-left, body.touch .sel-right { top: calc(30px + env(safe-area-inset-top)); max-height: calc(100% - 104px); }
+  body.touch .sel-bottom { bottom: calc(18px + env(safe-area-inset-bottom)); }
+}
+body.touch.portrait .sel-left { right: calc(8px + env(safe-area-inset-right)); width: auto; top: calc(62px + env(safe-area-inset-top)); max-height: none; }
+body.touch.portrait .sel-right { left: calc(8px + env(safe-area-inset-left)); width: auto; top: auto; bottom: calc(94px + env(safe-area-inset-bottom)); max-height: 27vh; }
+body.touch.portrait .champ-list { grid-template-columns: repeat(4, 1fr); }
+body.touch .sel-bottom .btn { white-space: nowrap; }
+body.touch.portrait .sel-bottom { left: calc(8px + env(safe-area-inset-left)); right: calc(8px + env(safe-area-inset-right)); transform: none; }
+body.touch.portrait #heroName { flex: 1; width: auto; min-width: 0; }
+body.touch.portrait .realm { max-width: 94vw; overflow: hidden; text-overflow: ellipsis; }
+body.touch.portrait #minimapWrap { transform: scale(0.5); }
+body.touch.portrait #gold { top: calc(146px + env(safe-area-inset-top)); }

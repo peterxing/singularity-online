@@ -164,7 +164,9 @@ export class UI {
     $('pfPortrait').src = this.portraits['c:' + champId] || '';
     $('pfName').textContent = name;
     $('pfEn').parentElement.classList.toggle('eacc', ch.faction === 'eacc');
-    const bar = $('actionBar');
+    const touch = !!this.g.touch;
+    const bar = touch ? $('tAbilities') : $('actionBar');
+    $('actionBar').innerHTML = '';
     bar.innerHTML = '';
     this.slots = [];
     const ids = [...ch.abilities, 'potion'];
@@ -173,12 +175,53 @@ export class UI {
       const el = document.createElement('div');
       el.className = 'slot';
       el.innerHTML = `<img src="${icon(a.icon, a.color)}" alt=""><div class="cd"></div><div class="cdt"></div><div class="key">${i + 1}</div>${ab === 'potion' ? '<div class="cnt"></div>' : ''}`;
-      el.onmousedown = (e) => { e.stopPropagation(); this.g.castSlot(i); };
-      el.onmouseenter = (e) => this.showAbilityTip(ab, e.currentTarget);
-      el.onmouseleave = () => this.hideTip();
+      if (touch) {
+        let timer = null, long = false;
+        el.addEventListener('pointerdown', (e) => {
+          e.preventDefault(); e.stopPropagation();
+          long = false;
+          el.classList.add('press');
+          timer = setTimeout(() => { long = true; this.showAbilityTip(ab, el); }, 450);
+        });
+        const end = (fire) => {
+          clearTimeout(timer);
+          el.classList.remove('press');
+          if (long) this.hideTip();
+          else if (fire) this.g.castSlot(i);
+          long = false;
+        };
+        el.addEventListener('pointerup', (e) => { e.preventDefault(); end(true); });
+        el.addEventListener('pointercancel', () => end(false));
+        el.addEventListener('contextmenu', (e) => e.preventDefault());
+      } else {
+        el.onmousedown = (e) => { e.stopPropagation(); this.g.castSlot(i); };
+        el.onmouseenter = (e) => this.showAbilityTip(ab, e.currentTarget);
+        el.onmouseleave = () => this.hideTip();
+      }
       bar.appendChild(el);
       this.slots.push({ el, ab, cd: el.querySelector('.cd'), cdt: el.querySelector('.cdt'), cnt: el.querySelector('.cnt'), max: 1, lastRem: 0 });
     });
+    if (touch) {
+      const qt = $('questTracker');
+      qt.onclick = () => qt.classList.toggle('collapsed');
+    }
+  }
+
+  toggleChat(force) {
+    const open = force ?? !document.body.classList.contains('chat-open');
+    document.body.classList.toggle('chat-open', open);
+    if (open) setTimeout(() => { const log = $('chatLog'); log.scrollTop = log.scrollHeight; $('chatInput').focus(); }, 50);
+    else $('chatInput').blur();
+  }
+
+  hint(text, ms = 4000) {
+    const h = $('rotateHint');
+    if (!h) return;
+    h.textContent = text;
+    h.classList.remove('hidden');
+    clearTimeout(this._hintT);
+    this._hintT = setTimeout(() => h.classList.add('hidden'), ms);
+    h.onclick = () => h.classList.add('hidden');
   }
 
   pressSlot(i) { const s = this.slots[i]; if (!s) return; s.el.classList.add('press'); setTimeout(() => s.el.classList.remove('press'), 110); }
@@ -254,8 +297,9 @@ export class UI {
         const v = inp.value.trim();
         inp.value = '';
         inp.blur();
+        document.body.classList.remove('chat-open');
         if (v) this.g.sendChat(v);
-      } else if (e.key === 'Escape') { inp.value = ''; inp.blur(); }
+      } else if (e.key === 'Escape') { inp.value = ''; inp.blur(); document.body.classList.remove('chat-open'); }
     });
   }
 
@@ -298,7 +342,12 @@ export class UI {
 
   toggleHelp() {
     if (!$('help').classList.contains('hidden')) { $('help').classList.add('hidden'); return; }
-    const rows = [
+    const rows = this.g.touch ? [
+      ['Left thumb', 'Virtual joystick: move (push further to run)'], ['Drag right side', 'Look around'], ['Pinch', 'Zoom the camera'],
+      ['Tap', 'Select a target; tap an NPC to talk, a sheaf to gather'], ['Tap target again', 'Start attacking it'],
+      ['Big button', 'Main ability (auto-targets the nearest enemy)'], ['Arc buttons', 'Other abilities; hold for details'], ['Small flask', 'Energy Drink (heal 40%)'],
+      ['Arrow', 'Jump'], ['Crosshair', 'Next enemy'], ['Speech button', 'Talk / gather nearby'], ['Top buttons', 'Quests, map, help, settings, chat, fullscreen'],
+    ] : [
       ['W / S', 'Run forward / backward'], ['A / D', 'Turn (strafe while holding right mouse)'], ['Q / E', 'Strafe left / right'],
       ['Space', 'Jump'], ['Left mouse drag', 'Look around'], ['Right mouse drag', 'Steer your champion'], ['Both mouse buttons', 'Run forward'],
       ['Mouse wheel', 'Zoom'], ['Left click', 'Select target'], ['Right click', 'Attack / talk / gather'], ['Tab', 'Cycle nearby enemies'],
@@ -640,6 +689,7 @@ export class UI {
     let boss = null;
     for (const v of g.ents.map.values()) if (v.kind === 'mob' && v.info.bs && !v.dead && (v.flags & FLAGS.F_COMBAT) && v.pos.distanceTo(g.ctrl.pos) < 110) boss = v;
     const bb = $('bossBar');
+    document.body.classList.toggle('boss-on', !!boss);
     if (!boss) { bb.classList.add('hidden'); return; }
     bb.classList.remove('hidden');
     $('bossName').textContent = `${boss.info.n.toUpperCase()} — ${boss.info.ti || ''}`;

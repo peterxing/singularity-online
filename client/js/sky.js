@@ -180,7 +180,7 @@ export class Sky {
     this.hemi.intensity = k.hemiI;
     const scene = this.gfx.scene;
     scene.fog.color.copy(k.hor).lerp(k.zen, 0.12);
-    scene.fog.density = k.fogD;
+    scene.fog.density = k.fogD * (this.gfx.q.fogMul || 1);
     scene.environmentIntensity = k.env;
     this.gfx.renderer.toneMappingExposure = k.exp;
     this.exposure = k.exp;
@@ -201,7 +201,7 @@ export class Sky {
 
     this.envTimer -= dt;
     if (this.envTimer <= 0 || Math.abs(e - this.lastEnvE) > 0.03) {
-      this.envTimer = 6;
+      this.envTimer = this.gfx.q.envInterval || 6;
       this.lastEnvE = e;
       if (this.envRT) this.envRT.dispose();
       this.envRT = this.pmrem.fromScene(this.envScene, 0.02, 1, 5000);

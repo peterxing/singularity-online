@@ -38,6 +38,24 @@ Open http://localhost:8080. Friends on your network can join at `http://<your-ip
 | Enter | Chat (`/s`, `/who`, `/dance`, `/wave`, `/sit`, `/cheer`, `/stuck`) |
 | L / M / H / Esc | Quest log / map / help / settings |
 
+### Phones and tablets
+
+The game runs on phones and tablets (iOS Safari, Android Chrome), and is best in landscape.
+
+| Touch | Action |
+|---|---|
+| Left thumb (anywhere in the lower left) | Floating joystick: run in any direction relative to the camera |
+| Drag on the right side | Look around |
+| Pinch | Zoom |
+| Tap | Target. Tap an NPC to talk, a resource to gather, or the current enemy again to attack |
+| Big button + arc | Abilities (long-press shows the tooltip), with Energy Drink on the small button |
+| Arrow / crosshair / speech buttons | Jump / cycle enemies / interact |
+| Top-right buttons | Quest log, map, help, settings, chat, fullscreen |
+
+Phones default to a **Mobile** graphics preset. It uses capped resolution, lighter terrain and grass shaders, fewer lights and shorter draw distances. Quality drops further if the frame rate falls. To play it like an app, use **Add to Home Screen**: it launches fullscreen in landscape. Use `?touch` or `?desktop` to force either control scheme.
+
+![Playing on a phone](screenshots/mobile-landscape.jpg)
+
 ## Champions
 
 | e/acc | Role | EA | Role |
