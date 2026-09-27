@@ -327,7 +327,7 @@ class Game {
     this.ctrl.camPitch = 0.28;
     this.ctrl.dist = this.ctrl.distCur = 9;
     this.sky.override = this.settings.tod || 'auto';
-    this.ui.chat(`Connected to ${this.mode === 'online' ? 'the Latent Space realm' : 'a local simulation (offline mode)'}. Welcome, ${m.name}!`, 'sys');
+    this.ui.chat(`Connected to ${this.mode === 'online' ? 'the Latent Space realm' : 'the solo realm, where simulated players roam'}. Welcome, ${m.name}!`, 'sys');
     this.ui.chat('Talk to NPCs with a gold ! to get quests. Press H for controls.', 'sys');
     this.audio.faction = this.faction;
   }
