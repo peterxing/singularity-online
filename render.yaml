@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: singularity-online
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: node server/server.js
+    healthCheckPath: /status
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: BOTS
+        value: "10"

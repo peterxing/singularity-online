@@ -54,3 +54,7 @@ Open http://localhost:8080. Friends on your network can join at `http://<your-ip
 - `client/js/`: renderer (sky, terrain, grass, foliage, water, buildings, post-processing), procedural rigged characters and monsters, VFX, UI, audio and networking.
 
 Graphics quality adapts automatically. You can also change it in Settings (Esc). Dev views: `?gallery=champs`, `?gallery=mobs`.
+
+## License
+
+MIT; see [LICENSE](LICENSE). The bundled three.js keeps its own MIT license.

@@ -1,5 +1,8 @@
 import { World } from '../shared/world.js';
 
+// Shared online realm used by the GitHub Pages build (free Render instance; it sleeps when idle).
+export const DEFAULT_REALM = null;
+
 export class Net {
   constructor(terrain) {
     this.terrain = terrain;
@@ -10,34 +13,66 @@ export class Net {
     this.localId = 0;
     this.queue = [];
     this.onClose = null;
+    this.onUpgrade = null;
+    this.joined = false;
   }
 
-  connect() {
+  _realm() {
     const params = new URLSearchParams(location.search);
-    if (params.has('offline')) return Promise.resolve(this._offline());
-    const realm = params.get('realm') || window.SO_REALM || null;
-    if (!realm && (location.protocol === 'file:' || location.hostname.endsWith('github.io'))) return Promise.resolve(this._offline());
+    if (params.has('offline') || params.has('solo')) return { solo: true };
+    const hosted = location.hostname.endsWith('github.io');
+    const realm = params.get('realm') || window.SO_REALM || (hosted ? DEFAULT_REALM : null);
+    if (realm) return { url: realm, remote: true };
+    if (location.protocol === 'file:' || hosted) return { solo: true };
+    return { url: `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`, remote: false };
+  }
+
+  async connect() {
+    const r = this._realm();
+    if (r.solo) return this._offline();
+    this.realmUrl = r.url;
+    if (await this._tryOpen(r.url, 2500)) return 'online';
+    if (r.remote) { this._wake(r.url); this.mode = 'offline'; return 'waking'; }
+    return this._offline();
+  }
+
+  _tryOpen(url, timeout) {
     return new Promise((resolve) => {
-      let done = false;
-      let ws;
-      const url = realm || `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;
-      try { ws = new WebSocket(url); } catch { resolve(this._offline()); return; }
-      const finish = (mode) => { if (done) return; done = true; clearTimeout(timer); resolve(mode); };
-      const timer = setTimeout(() => { try { ws.close(); } catch { /* ignore */ } finish(this._offline()); }, 2500);
+      let done = false, ws;
+      try { ws = new WebSocket(url); } catch { resolve(false); return; }
+      const finish = (v) => { if (done) return; done = true; clearTimeout(timer); resolve(v); };
+      const timer = setTimeout(() => { try { ws.close(); } catch { /* ignore */ } finish(false); }, timeout);
       ws.onopen = () => {
+        if (done || this.joined) { try { ws.close(); } catch { /* ignore */ } return; }
         this.ws = ws;
         this.mode = 'online';
         ws.onmessage = (e) => { try { this._dispatch(JSON.parse(e.data)); } catch (err) { console.error(err); } };
-        ws.onclose = () => { if (this.onClose) this.onClose(); };
-        finish('online');
+        ws.onclose = () => { if (this.onClose && this.joined && this.mode === 'online') this.onClose(); };
+        finish(true);
       };
-      ws.onerror = () => finish(this._offline());
+      ws.onerror = () => finish(false);
     });
+  }
+
+  // Free hosts sleep when idle: ping the status endpoint to wake the server and keep retrying.
+  _wake(url) {
+    const status = url.replace(/^ws(s?):/, 'http$1:').replace(/\/ws\/?$/, '/status');
+    let tries = 0;
+    const tick = async () => {
+      if (this.joined || this.mode === 'online') return;
+      tries++;
+      fetch(status, { mode: 'no-cors', cache: 'no-store' }).catch(() => {});
+      if (await this._tryOpen(url, 4000)) { if (this.onUpgrade) this.onUpgrade('online'); return; }
+      if (tries < 30 && !this.joined) setTimeout(tick, 3000);
+      else if (!this.joined && this.onUpgrade) this.onUpgrade('offline');
+    };
+    setTimeout(tick, 300);
   }
 
   _offline() { this.mode = 'offline'; return 'offline'; }
 
   join(name, champion) {
+    this.joined = true;
     if (this.mode === 'online') {
       this.ws.send(JSON.stringify({ t: 'join', name, champion }));
       return;

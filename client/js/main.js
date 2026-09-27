@@ -90,6 +90,7 @@ class Game {
     this.net.on((m) => this.onMessage(m));
     this.net.onClose = () => document.getElementById('disconnect').classList.remove('hidden');
     this.mode = await this.net.connect();
+    this.net.onUpgrade = (m) => { this.mode = m; if (this.selectMode) this.ui.setRealm(m); };
     this.ui.loading(95, 'Compiling shaders…');
     await nextFrame();
     this.enterSelect();
@@ -297,6 +298,7 @@ class Game {
 
   enterWorld(name, champ) {
     this.pendingName = name;
+    this.mode = this.net.mode === 'online' ? 'online' : 'offline';
     this.net.join(name, champ);
     document.getElementById('enterBtn').disabled = true;
   }

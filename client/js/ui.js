@@ -148,8 +148,10 @@ export class UI {
 
   setRealm(mode) {
     const r = $('realm');
-    r.className = 'realm ' + mode;
-    r.textContent = mode === 'online' ? 'Realm: Latent Space (PvP) — Online' : 'Realm: Solo Latent Space — simulated players';
+    r.className = 'realm ' + (mode === 'waking' ? 'offline' : mode);
+    r.textContent = mode === 'online' ? 'Realm: Latent Space (PvP) — Online'
+      : mode === 'waking' ? 'Waking the online realm (free server naps when idle, ~1 min)… or enter now to play solo'
+        : 'Realm: Solo Latent Space — simulated players';
   }
 
   hideSelect() { $('select').classList.add('hidden'); }
